@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine
+FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk-alpine
 
 # Creamos un directorio de trabajo
 WORKDIR /app
