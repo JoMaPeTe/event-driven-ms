@@ -1,0 +1,13 @@
+# Inventory Service (Worker) T
+
+The backend worker responsible for the heavy lifting (Orbital Mechanics & Resource Management).
+
+## Key Features
+
+* **Event Consumer:** Listens to `orbit-tasks-queue` for new jobs.
+* **Idempotency Check:** Prevents duplicate processing of the same message using a unique ID check.
+* **Business Logic:** Simulates orbit propagation and fuel checks.
+* **Reactive Feedback:** Publishes the result (Success/Failure) back to the system to complete the Saga.
+
+## Configuration
+Runs on port **8081**. It is not directly exposed to the user (Worker pattern).

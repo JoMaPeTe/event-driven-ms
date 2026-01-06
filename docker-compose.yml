@@ -1,0 +1,70 @@
+
+
+services:
+  # --- 1. Discovery Pattern(EUREKA):
+  # Acts as the "Phonebook". Helps discover the IP address of new MS added.
+  # 1. Registration: Services register here so they can find each other without hardcoding IPs(which change dynamically) .
+  # 2. Health Check: Monitors which instances are UP or DOWN via heartbeats. ---
+  discovery:
+    build: ./discovery-server
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - poc-network
+
+  # --- 2. Worker (Inventory + Mongo) ---
+  inventory:
+    build: ./inventory-service
+    container_name: inventory-service
+    ports:
+      - "8081:8081"
+    environment:
+      # Environment variables
+      - EUREKA_URI=http://discovery-server:8761/eureka/
+      - RABBITMQ_URI=${RABBITMQ_URI}  # Reads from .env
+
+      # Connection 'mongo-db' container)
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-db:27017/inventory-db
+    networks:
+      - poc-network
+    depends_on:
+      - discovery
+      - mongo-db
+
+  # --- 3. Order (receives the order and start everything)---
+  order:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8082:8082"
+    environment:
+      - EUREKA_URI=http://discovery-server:8761/eureka/
+      - RABBITMQ_URI=${RABBITMQ_URI} # Reads file .env
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-db:27017/order-db #OrderDB -> Pattern One DB per Service
+
+
+    networks:
+      - poc-network
+    depends_on:
+      - discovery
+      - mongo-db
+  # --- 4. Persistence Data Base ---
+  mongo-db:
+    image: mongo:latest
+    container_name: mongo-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - poc-network
+
+# Shared Network
+networks:
+  poc-network:
+    driver: bridge
+
+# Physic place to store data for persistence
+volumes:
+  mongo-data:

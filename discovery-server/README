@@ -1,0 +1,8 @@
+# Discovery Server (Eureka)
+
+The Service Registry based on **Netflix Eureka**.
+
+It allows microservices (`Order` and `Inventory`) to find each other dynamically without hardcoded IPs.
+Essential for the API Gateway routing and system health monitoring.
+
+**Dashboard:** [http://localhost:8761](http://localhost:8761)
