@@ -1,10 +1,10 @@
 
 
 services:
-  # --- 1. Discovery Pattern(EUREKA):
-  # Acts as the "Phonebook". Helps discover the IP address of new MS added.
-  # 1. Registration: Services register here so they can find each other without hardcoding IPs(which change dynamically) .
-  # 2. Health Check: Monitors which instances are UP or DOWN via heartbeats. ---
+  # 1. Discovery Pattern(EUREKA):
+  ## Acts as the "Phonebook". Helps discover the IP address of new MS added.
+  ## 1. Registration: Services register here so they can find each other without hardcoding IPs(which change dynamically) .
+  ## 2. Health Check: Monitors which instances are UP or DOWN via heartbeats.
   discovery:
     image: jopecode/discovery-service:0.0.0
     container_name: discovery-service
@@ -13,12 +13,12 @@ services:
     networks:
       - poc-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      test: [ "CMD", "wget", "--spider", "-q", "http://discovery:8761/actuator/health" ]
       interval: 10s
       retries: 5
-      start_period: 10s
+      start_period: 15s
 
-  # --- 2. Worker (Inventory + Mongo) ---
+  # 2. Worker (Inventory + Mongo)
   inventory:
     image: jopecode/inventory-service:0.0.0
     container_name: inventory-service
@@ -26,31 +26,13 @@ services:
       - "8081:8081"
     environment:
       # Environment variables
-      - EUREKA_URI=http://discovery-service:8761/eureka/
-      - RABBITMQ_URI=${RABBITMQ_URI}  # Reads from .env
-
-      # Connection 'mongo-db' container)
+      - EUREKA_URI=http://discovery:8761/eureka/
+      #- RABBITMQ_URI=${RABBITMQ_URI}  # Reads from .env
+      - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672
       - SPRING_DATA_MONGODB_URI=mongodb://mongo-db:27017/inventory-db
-    networks:
-      - poc-network
-    depends_on:
-       discovery:
-        condition: service_healthy
-       mongo-db:
-         condition: service_started
-
-  # --- 3. Order (receives the order and start everything)---
-  order:
-    image: jopecode/order-service:0.0.0
-    container_name: order-service
-    ports:
-      - "8082:8082"
-    environment:
-      - EUREKA_URI=http://discovery-server:8761/eureka/
-      - RABBITMQ_URI=${RABBITMQ_URI} # Reads file .env
-      - SPRING_DATA_MONGODB_URI=mongodb://mongo-db:27017/order-db #OrderDB -> Pattern One DB per Service
-
-
+      - SERVER_ADDRESS=0.0.0.0
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true -Deureka.client.serviceUrl.defaultZone=http://discovery:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
     networks:
       - poc-network
     depends_on:
@@ -58,7 +40,29 @@ services:
         condition: service_healthy
       mongo-db:
         condition: service_started
-  # --- 4. Persistence Data Base ---
+
+  #  3. Order (receives the order and start everything)
+  order:
+    image: jopecode/order-service:0.0.0
+    container_name: order-service
+    ports:
+      - "8082:8082"
+    environment:
+      - EUREKA_URI=http://discovery:8761/eureka/
+      #- RABBITMQ_URI=${RABBITMQ_URI} # Reads file .env
+      - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo-db:27017/order-db #OrderDB -> Pattern One DB per Service
+      - SERVER_ADDRESS=0.0.0.0
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true -Deureka.client.serviceUrl.defaultZone=http://discovery:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    networks:
+      - poc-network
+    depends_on:
+      discovery:
+        condition: service_healthy
+      mongo-db:
+        condition: service_started
+  # 4. Persistence Data Base
   mongo-db:
     image: mongo:latest
     container_name: mongo-db
@@ -68,7 +72,20 @@ services:
       - mongo-data:/data/db
     networks:
       - poc-network
-
+# RabbitMQ Message Broker: You can visit https://www.cloudamqp.com/
+# by using your local account in RABBITMQ_URI .env
+# or you can have a local Rabbit container
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # Puerto de datos (AMQP)
+      - "15672:15672" # Puerto del panel de control (UI)
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    networks:
+      - poc-network
 # Shared Network
 networks:
   poc-network:

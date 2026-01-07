@@ -2,56 +2,48 @@ package com.jomapete.orderservice;
 
 import com.jomapete.orderservice.controller.OrderController;
 import com.jomapete.orderservice.dto.OrderEvent;
-import com.jomapete.orderservice.entity.OrderState;
-import com.jomapete.orderservice.repository.OrderRepository;
+import com.jomapete.orderservice.service.impl.OrderServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderControllerTest {
 
-    @Mock
-    private RabbitTemplate rabbitTemplate; // Mock RabbitMQ
+        @Mock
+        private OrderServiceImpl orderService; // Mocking the Service Interface
 
-    @Mock
-    private OrderRepository orderRepository; // Mock MongoDB
+        @InjectMocks
+        private OrderController orderController;
 
-    @InjectMocks
-    private OrderController orderController; // System Under Test
+        @Test
+        void shouldReturnSuccessMessage_WhenOrderIsLaunched() {
+            // GIVEN: A simulated request from the user
+            OrderEvent request = new OrderEvent();
+            request.setSatelliteName("Explorer-1");
 
-    @Test
-    void shouldCreateOrder_AndPublishMessage() {
-        // GIVEN
-        OrderEvent request = new OrderEvent();
-        request.setSatelliteName("Falcon-9");
-        // No action set, testing default value logic
+            // Mocking the service response to return the event with a generated ID
+            OrderEvent mockProcessedEvent = new OrderEvent();
+            mockProcessedEvent.setId("mock-uuid-123");
+            mockProcessedEvent.setSatelliteName("Explorer-1");
 
-        // WHEN
-        String response = orderController.launchSatelliteTask(request);
+            when(orderService.createOrder(any(OrderEvent.class))).thenReturn(mockProcessedEvent);
 
-        // THEN
-        // 1. Verify Persistence (Database per Service pattern)
-        ArgumentCaptor<OrderState> orderCaptor = ArgumentCaptor.forClass(OrderState.class);
-        verify(orderRepository).save(orderCaptor.capture());
+            // WHEN: Calling the controller endpoint
+            String response = orderController.launchSatelliteTask(request);
 
-        OrderState savedOrder = orderCaptor.getValue();
-        assertEquals("PENDING", savedOrder.getStatus()); // Must start as PENDING
-        assertNotNull(savedOrder.getId()); // ID must be generated
+            // THEN:
+            // 1. Verify that the controller delegated the responsibility to the Service
+            verify(orderService, times(1)).createOrder(request);
 
-        // 2. Verify Producer (Message Sending)
-        verify(rabbitTemplate).convertAndSend(eq("orbit-tasks-queue"), any(OrderEvent.class));
-
-        System.out.println("TEST PASSED: Order saved as PENDING and published to Queue.");
-    }
+            // 2. Verify that the HTTP response string contains key data
+            assertTrue(response.contains("Explorer-1"));
+            assertTrue(response.contains("mock-uuid-123"));
+        }
 }

@@ -1,12 +1,11 @@
-FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk-alpine
+FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jre-alpine
 
 # Creamos un directorio de trabajo
 WORKDIR /app
 
-# Copiamos el JAR generado (el nombre puede variar, usamos comodín *)
-COPY target/*.jar app.jar
+COPY target/inventory-service-0.0.1-SNAPSHOT.jar /app/app.jar
 
-# Comando de inicio
-ENTRYPOINT ["java", "-jar", "inventory-service-0.0.1-SNAPSHOT.jar"]
+#  EJECUCIÓN: Llamamos a la Ruta Absoluta
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 LABEL authors="jopecode"
 

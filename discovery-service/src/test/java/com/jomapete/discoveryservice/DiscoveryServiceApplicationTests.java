@@ -1,10 +1,10 @@
-package com.jomapete.discoveryserver;
+package com.jomapete.discoveryservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DiscoveryServerApplicationTests {
+class DiscoveryServiceApplicationTests {
 
     @Test
     void contextLoads() {
