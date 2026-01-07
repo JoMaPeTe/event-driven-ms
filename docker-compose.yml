@@ -6,8 +6,8 @@ services:
   # 1. Registration: Services register here so they can find each other without hardcoding IPs(which change dynamically) .
   # 2. Health Check: Monitors which instances are UP or DOWN via heartbeats. ---
   discovery:
-    image: jopecode/discovery-server:0.0.0
-    container_name: discovery-server
+    image: jopecode/discovery-service:0.0.0
+    container_name: discovery-service
     ports:
       - "8761:8761"
     networks:
@@ -26,7 +26,7 @@ services:
       - "8081:8081"
     environment:
       # Environment variables
-      - EUREKA_URI=http://discovery-server:8761/eureka/
+      - EUREKA_URI=http://discovery-service:8761/eureka/
       - RABBITMQ_URI=${RABBITMQ_URI}  # Reads from .env
 
       # Connection 'mongo-db' container)
