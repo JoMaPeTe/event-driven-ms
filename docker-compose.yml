@@ -6,16 +6,21 @@ services:
   # 1. Registration: Services register here so they can find each other without hardcoding IPs(which change dynamically) .
   # 2. Health Check: Monitors which instances are UP or DOWN via heartbeats. ---
   discovery:
-    build: ./discovery-server
+    image: jopecode/discovery-server:0.0.0
     container_name: discovery-server
     ports:
       - "8761:8761"
     networks:
       - poc-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      retries: 5
+      start_period: 10s
 
   # --- 2. Worker (Inventory + Mongo) ---
   inventory:
-    build: ./inventory-service
+    image: jopecode/inventory-service:0.0.0
     container_name: inventory-service
     ports:
       - "8081:8081"
@@ -29,12 +34,14 @@ services:
     networks:
       - poc-network
     depends_on:
-      - discovery
-      - mongo-db
+       discovery:
+        condition: service_healthy
+       mongo-db:
+         condition: service_started
 
   # --- 3. Order (receives the order and start everything)---
   order:
-    build: ./order-service
+    image: jopecode/order-service:0.0.0
     container_name: order-service
     ports:
       - "8082:8082"
@@ -47,8 +54,10 @@ services:
     networks:
       - poc-network
     depends_on:
-      - discovery
-      - mongo-db
+      discovery:
+        condition: service_healthy
+      mongo-db:
+        condition: service_started
   # --- 4. Persistence Data Base ---
   mongo-db:
     image: mongo:latest
