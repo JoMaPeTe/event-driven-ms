@@ -4,11 +4,10 @@ import com.jomapete.inventoryservice.dto.OrbitResult;
 import com.jomapete.inventoryservice.dto.OrderEvent;
 import com.jomapete.inventoryservice.repository.ProcessedEventRepository;
 import com.jomapete.inventoryservice.service.impl.InventoryServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
@@ -18,16 +17,20 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceTest {
-
-    @Mock // Simulate RabbitMQ
-    private RabbitTemplate rabbitTemplate;
-
-
-    @Mock // Simulate Mongo DataBase
     private ProcessedEventRepository repository;
-
-    @InjectMocks // Inyectamos simulations in our real class
+    private RabbitTemplate rabbitTemplate;
     private InventoryServiceImpl inventoryService;
+
+    @BeforeEach
+    void setUp() {
+        // Inicializamos los mocks manualmente (o usando @Mock con MockitoExtension)
+        repository = mock(ProcessedEventRepository.class);
+        rabbitTemplate = mock(RabbitTemplate.class);
+
+        // Gracias al constructor, inyectamos los mocks fácilmente
+        inventoryService = new InventoryServiceImpl(rabbitTemplate, repository);
+    }
+
 
     @Test
     void shouldProcessSuccess_WhenSatelliteIsNormal() {

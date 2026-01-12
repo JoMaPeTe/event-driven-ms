@@ -6,7 +6,6 @@ import com.jomapete.inventoryservice.entity.ProcessedEvent;
 import com.jomapete.inventoryservice.repository.ProcessedEventRepository;
 import com.jomapete.inventoryservice.service.InventoryService;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -14,12 +13,14 @@ import java.time.LocalDateTime;
 @Service
 public class InventoryServiceImpl implements InventoryService {
 
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
+    private final RabbitTemplate rabbitTemplate;
+    private final ProcessedEventRepository repository;
 
-    // IOC (inversion of control): inyect DB connection
-    @Autowired
-    private ProcessedEventRepository repository;
+    // 2. Constructor inyectio (Dont need @Autowired if we have aonly 1 constructor)
+    public InventoryServiceImpl(RabbitTemplate rabbitTemplate, ProcessedEventRepository repository) {
+        this.rabbitTemplate = rabbitTemplate;
+        this.repository = repository;
+    }
 
     @Override
     public void handleOrbitProcess(OrderEvent event) {
