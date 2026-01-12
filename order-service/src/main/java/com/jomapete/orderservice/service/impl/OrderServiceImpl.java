@@ -6,7 +6,6 @@ import com.jomapete.orderservice.entity.OrderState;
 import com.jomapete.orderservice.repository.OrderRepository;
 import com.jomapete.orderservice.service.OrderService;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -14,10 +13,15 @@ import java.util.UUID;
 
 @Service
 public class OrderServiceImpl implements OrderService {
-    @Autowired
-    private OrderRepository orderRepository;
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
+    //@Autowired: with only 1 constructor, dont need this anotation
+    private final OrderRepository orderRepository;
+    //@Autowired
+    private final RabbitTemplate rabbitTemplate;
+
+    public OrderServiceImpl(OrderRepository orderRepository, RabbitTemplate rabbitTemplate) {
+        this.orderRepository = orderRepository;
+        this.rabbitTemplate = rabbitTemplate;
+    }
 
     @Override
     public void processOrbitResult(OrbitResult result) {

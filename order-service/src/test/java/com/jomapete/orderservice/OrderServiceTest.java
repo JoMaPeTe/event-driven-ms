@@ -4,11 +4,11 @@ import com.jomapete.orderservice.dto.OrderEvent;
 import com.jomapete.orderservice.entity.OrderState;
 import com.jomapete.orderservice.repository.OrderRepository;
 import com.jomapete.orderservice.service.impl.OrderServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
@@ -21,15 +21,15 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
-    @Mock
-    private RabbitTemplate rabbitTemplate; // Mock RabbitMQ
-
-    @Mock
-    private OrderRepository orderRepository; // Mock MongoDB
-
-    @InjectMocks
-    private OrderServiceImpl orderService; // System Under Test
-
+    private OrderRepository orderRepository;
+    private RabbitTemplate rabbitTemplate;
+    private OrderServiceImpl orderService;
+    @BeforeEach
+    void setUp() {
+        orderRepository = Mockito.mock(OrderRepository.class);
+        rabbitTemplate = Mockito.mock(RabbitTemplate.class);
+        orderService = new OrderServiceImpl(orderRepository, rabbitTemplate);
+    }
     @Test
     void shouldCreateOrder_AndPublishMessage() {
         // GIVEN
